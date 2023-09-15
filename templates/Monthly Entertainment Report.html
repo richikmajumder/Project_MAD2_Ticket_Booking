@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monthly Entertainment Report</title>
+    <!-- Your CSS styles here -->
+    <style>
+        /* Add your CSS styles here */
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f2f2f2;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+        h1 {
+            text-align: center;
+            color: #007BFF;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #007BFF;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #007BFF;
+            margin-top: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        .spend-section {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 30px;
+        }
+        .spend-heading {
+            color: #007BFF;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .user-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: #007BFF;
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+            position: relative; /* Add relative positioning */
+            z-index: 1; /* Add z-index to keep it above other elements */
+        }
+        .centered-content {
+            text-align: center;
+        }
+        .report-section {
+            margin-top: 70px; /* Adjusted margin top to prevent overlapping */
+        }
+        
+        .highlight {
+            background-color: #007BFF;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 3px;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="user-info">
+        <p>Username: {{ username }} </p>
+    </div>
+    <br><br>
+
+    <h1>Monthly Entertainment Report - {{ monthYear }}</h1>
+
+    <div class="report-section">
+        <h2>Bookings Made in the Previous Month</h2>
+        {% if not ratings %}
+        <table>
+            <tr>
+                <th>Show</th>
+                <th>Date of Show</th>
+                <th>Venue</th>
+                <th>Tickets Booked</th>
+                <th>Ticket Price</th>
+                <th>Total</th>
+                <th>Rating</th>
+            </tr>
+                    {% for booking in bookings %}
+                    {% for date in show_date %}
+                    {% if booking.id==date.id %}
+                    
+                    
+            
+                <tr>
+                    
+                    <td>{{ booking.show.name }}</td>
+                    <td>{{ date.ShowDate }}</td>
+                    <td>{{ booking.venue.name }} - {{ booking.venue.place }}, {{ booking.venue.location }}</td>
+                    <td>{{ booking.tickets_booked }}</td>
+                    <td>{{ booking.ticket_price }}</td>
+                    <td>{{ booking.tickets_booked * booking.ticket_price }}</td>
+                    <td>Unrated</td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+            {% endfor %}
+        </table>
+
+
+        {% elif ratings %}
+        <table>
+            <tr>
+                <th>Show</th>
+                <th>Date of Show</th>
+                <th>Venue</th>
+                <th>Tickets Booked</th>
+                <th>Ticket Price</th>
+                <th>Total</th>
+                <th>Rating</th>
+            </tr>
+                    {% for booking in bookings %}
+                    {% for date in show_date %}
+                    {% for rating in ratings %}
+                    {% if booking.id==date.id %}
+                <tr>
+                    
+                    <td>{{ booking.show.name }}</td>
+                    <td>{{ date.ShowDate }}</td>
+                    <td>{{ booking.venue.name }} - {{ booking.venue.place }}, {{ booking.venue.location }}</td>
+                    <td>{{ booking.tickets_booked }}</td>
+                    <td>{{ booking.ticket_price }}</td>
+                    <td>{{ booking.tickets_booked * booking.ticket_price }}</td>
+                    {% if booking.show_id==rating.show_id %}
+                    <td>{{ rating.rating }}</td>
+                    {% else %}
+                    <td>Unrated</td>
+                    {% endif %}
+                </tr>
+                {% endif %}
+            {% endfor %}
+            {% endfor %}
+            {% endfor %}
+        </table>
+        {% endif %}
+    </div>
+
+    {% if genre != '' %}
+    <div class="report-section">
+        <h2 class="highlight">Favourite Movie Genre</h2>
+        <div class="centered-content">
+        <p><strong>{{ genre }}</strong></p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="spend-section">
+        <h2 class="spend-heading">Monthly Spends</h2>
+        <p>Total Spend in the Month: ₹{{ total_spend }}</p>
+    </div>
+
+    <div class="footer">
+        <p>This report is brought to you by TicketingApp. Enjoy!</p>
+    </div>
+</body>
+</html>

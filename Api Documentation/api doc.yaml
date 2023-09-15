@@ -1,0 +1,1408 @@
+openapi: 3.0.0
+info:
+  title: Ticketing App API
+  description: API for CRUD operations on Shows,Venues and updating profile information, wallet balance, booking show tickets, rating shows, signup/signin for user/admin and reset/forgot password for user/admin
+  version: '1.0'
+servers:
+  - url: http://127.0.0.1:8080
+    description: Local development server
+paths:
+  /signup:
+    post:
+      tags:
+        - Signup
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Username of the user
+                  example: john_doe
+                email:
+                  type: string
+                  description: Email of the user
+                  example: john@example.com
+                password:
+                  type: string
+                  description: Password for the user
+                  example: secret123
+                firstname:
+                  type: string
+                  description: First name of the user
+                  example: John
+                lastname:
+                  type: string
+                  description: Last name of the user
+                  example: Doe
+                pdf_report:
+                  type: string
+                  description: PDF report URL (optional)
+                  example: http://example.com/report.pdf
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              example:
+                message: User created successfully
+        '400':
+          description: Username or email already taken
+          content:
+            application/json:
+              example:
+                message: Username already taken
+
+  /signin:
+    post:
+      tags:
+        - Sign in
+      summary: Authenticate user and generate access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Username or email of the user
+                  example: john_doe
+                password:
+                  type: string
+                  description: Password for the user
+                  example: secret123
+      responses:
+        '200':
+          description: User authenticated successfully
+          content:
+            application/json:
+              example:
+                access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJqb2huQGV4YW1wbGUuY29tIiwiaXNfYWRtaW4iOmZhbHNlLCJpYXQiOjE2MzAxMzEwNzksImV4cCI6MTYzMDEzMzA3OX0.yJfUNUci5JdUp-Efprk0CtBEd2BJDvV-4YIsgm5aEaA
+                role: user
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              example:
+                message: Incorrect password or user not found
+  /protected:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: Get admin-protected resource
+      description: Retrieve user information for admin users with valid JWT token
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Admin-protected resource retrieved successfully
+          content:
+            application/json:
+              example:
+                username: admin_user
+                email: admin@example.com
+        '401':
+          description: Unauthorized - Invalid or missing JWT token, or user does not have the "admin" role
+          content:
+            application/json:
+              example:
+                message: Unauthorized
+  /user/protected:
+    get:
+      tags:
+        - User Dashboard
+      summary: Get protected user information
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User information retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  username: john_doe
+                  email: john@example.com
+  /api/username/{username}:
+    get:
+      tags:
+        - Availability check
+      summary: Check if a username is available
+      parameters:
+        - in: path
+          name: username
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Username is available
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: boolean
+                    enum: [true]
+        '404':
+          description: Username is not available
+
+  /api/email/{email}:
+    get:
+      tags:
+        - Availability check
+      summary: Check if an email is available
+      parameters:
+        - in: path
+          name: email
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Email is available
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: boolean
+                    enum: [true]
+        '404':
+          description: Email is not available
+
+  /api/show/{show}:
+    get:
+      tags:
+        - Availability check
+      summary: Check if a show name exists
+      parameters:
+        - in: path
+          name: show
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Show name exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: boolean
+                    enum: [true]
+                  name:
+                    type: string
+        '404':
+          description: Show name does not exist
+
+  /api/admin/signup:
+    post:
+      tags:
+        - Signup
+      summary: Create a new admin user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: admin
+                email:
+                  type: string
+                  example: admin@example.com
+                password:
+                  type: string
+                  example: admin123
+                firstname:
+                  type: string
+                  example: John
+                lastname:
+                  type: string
+                  example: Doe
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    enum: [User created successfully]
+        '400':
+          description: Username already taken
+ 
+  /api/show:
+    post:
+      tags:
+        - Show
+      summary: Add a new show and link it to a venue
+      description: Add a new show to the system and link it to a specific venue. The show can only be linked if it is not already linked to the same venue for the given date and time.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                venue_id:
+                  type: integer
+                  description: ID of the venue to link the show to
+                name:
+                  type: string
+                  description: Name of the show
+                rating:
+                  type: number
+                  description: Rating of the show
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  description: Tags related to the show
+                date:
+                  type: string
+                  format: date
+                  description: Date of the show
+                time:
+                  type: string
+                  format: time
+                  description: Time of the show
+                price:
+                  type: number
+                  description: Ticket price for the show
+      responses:
+        '200':
+          description: Show added successfully or linked to the venue
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Message indicating if the show was added successfully or linked to the venue
+        '401':
+          description: Unauthorized request, missing or invalid JWT token
+
+    get:
+      tags:
+        - Show
+      summary: Get a list of shows or details of a specific show
+      description: Get a list of all shows or details of a specific show using its ID.
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: integer
+          description: ID of the show to retrieve details for
+      responses:
+        '200':
+          description: List of shows or details of a specific show
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  show:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        description: ID of the show
+                      name:
+                        type: string
+                        description: Name of the show
+                      rating:
+                        type: number
+                        description: Rating of the show
+                      tags:
+                        type: array
+                        items:
+                          type: string
+                        description: Tags related to the show
+                    description: Details of the show
+                  links:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: ID of the link
+                        venue_id:
+                          type: integer
+                          description: ID of the linked venue
+                        show_id:
+                          type: integer
+                          description: ID of the linked show
+                        venue_name:
+                          type: string
+                          description: Name of the linked venue
+                        venue_place:
+                          type: string
+                          description: Place of the linked venue
+                        venue_location:
+                          type: string
+                          description: Location of the linked venue
+                        capacity:
+                          type: integer
+                          description: Maximum capacity of the linked venue
+                        date:
+                          type: string
+                          description: Date of the linked show
+                        time:
+                          type: string
+                          description: Time of the linked show
+                        ticket_price:
+                          type: number
+                          description: Ticket price of the linked show
+                      description: Details of the linked venue
+        '401':
+          description: Unauthorized request, missing or invalid JWT token
+        '404':
+          description: Show not found
+
+    patch:
+      tags:
+        - Show
+      summary: Update show details
+      description: Update the details of an existing show using its ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  description: ID of the show to be updated
+                name:
+                  type: string
+                  description: Updated name of the show
+                rating:
+                  type: number
+                  description: Updated rating of the show
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  description: Updated tags related to the show
+      responses:
+        '200':
+          description: Show details updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Message indicating successful update
+        '401':
+          description: Unauthorized request, missing or invalid JWT token
+  
+  /api/show/delete/{id}:
+    delete:
+      tags:
+        - Show
+      summary: Delete a Venue by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID of the Venue to delete
+      responses:
+        '200':
+          description: Venue deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Deleted successfully
+        '404':
+          description: Venue not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Venue not found
+  
+  /api/venue:
+    post:
+      tags:
+        - Venue
+      summary: Add a new venue
+      description: Add a new venue to the system with the provided details.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                venuename:
+                  type: string
+                  description: Name of the venue
+                place:
+                  type: string
+                  description: Place of the venue
+                location:
+                  type: string
+                  description: Location of the venue
+                capacity:
+                  type: integer
+                  description: Maximum capacity of the venue
+      responses:
+        '200':
+          description: Venue added successfully or already present
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Message indicating if the venue was added successfully or if it's already present
+        '401':
+          description: Unauthorized request, missing or invalid JWT token
+
+    get:
+      tags:
+        - Venue
+      summary: Get a list of venues or details of a specific venue
+      description: Get a list of all venues or details of a specific venue using its ID.
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: integer
+          description: ID of the venue to retrieve details for
+      responses:
+        '200':
+          description: List of venues or details of a specific venue
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  venue:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        description: ID of the venue
+                      name:
+                        type: string
+                        description: Name of the venue
+                      place:
+                        type: string
+                        description: Place of the venue
+                      location:
+                        type: string
+                        description: Location of the venue
+                      capacity:
+                        type: integer
+                        description: Maximum capacity of the venue
+                    description: Details of the venue
+                  links:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: ID of the link
+                        show_name:
+                          type: string
+                          description: Name of the linked show
+                        rating:
+                          type: number
+                          description: Rating of the linked show
+                        tags:
+                          type: array
+                          items:
+                            type: string
+                          description: Tags of the linked show
+                        date:
+                          type: string
+                          description: Date of the linked show
+                        time:
+                          type: string
+                          description: Time of the linked show
+                        ticket_price:
+                          type: number
+                          description: Ticket price of the linked show
+                        show_id:
+                          type: integer
+                          description: ID of the linked show
+                        venue_id:
+                          type: integer
+                          description: ID of the venue
+                      description: Details of the linked show
+        '401':
+          description: Unauthorized request, missing or invalid JWT token
+        '404':
+          description: Venue not found
+
+    patch:
+      tags:
+        - Venue
+      summary: Update venue details
+      description: Update the details of an existing venue using its ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  description: ID of the venue to be updated
+                name:
+                  type: string
+                  description: Updated name of the venue
+                place:
+                  type: string
+                  description: Updated place of the venue
+                location:
+                  type: string
+                  description: Updated location of the venue
+                capacity:
+                  type: integer
+                  description: Updated maximum capacity of the venue
+      responses:
+        '200':
+          description: Venue details updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    description: Message indicating successful update
+        '401':
+          description: Unauthorized request, missing or invalid JWT token
+          
+  /api/venue/{id}:
+    delete:
+      tags:
+        - Venue
+      summary: Delete a Venue by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID of the Venue to delete
+      responses:
+        '200':
+          description: Venue deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Deleted successfully
+        '404':
+          description: Venue not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Venue not found
+          
+  /api/admin/showlink:
+    get:
+      tags:
+        - Links
+      summary: Get link details by ID
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Link details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  show_id:
+                    type: integer
+                    example: 1
+                  venue_id:
+                    type: integer
+                    example: 1
+                  venue_name:
+                    type: string
+                    example: Venue A
+                  venue_place:
+                    type: string
+                    example: Place X
+                  venue_location:
+                    type: string
+                    example: Location Y
+                  venue_capacity:
+                    type: integer
+                    example: 100
+                  date:
+                    type: string
+                    example: 2023-05-15
+                  time:
+                    type: string
+                    example: 15:30:00
+                  ticket_price:
+                    type: number
+                    example: 250.0
+
+    patch:
+      tags:
+        - Links
+      summary: Update link details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 1
+                show_id:
+                  type: integer
+                  example: 1
+                venue_id:
+                  type: integer
+                  example: 1
+                date:
+                  type: string
+                  example: 2023-05-15
+                time:
+                  type: string
+                  example: 15:30:00
+                price:
+                  type: number
+                  example: 250.0
+      responses:
+        '200':
+          description: Link details updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Updated successfully
+        '400':
+          description: Duplicate entry or entry unchanged
+          
+  /api/admin/showlink/delink/{id}:
+    delete:
+      tags:
+        - Links
+      summary: Remove a link between a show and a venue
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID of the link to remove
+      responses:
+        '200':
+          description: Show delinked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Show delinked successfully
+        '404':
+          description: Link is missing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Link is missing
+          
+  /api/admin/venuelink:
+    get:
+      tags:
+        - Links
+      summary: Get link details by ID
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Link details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  venue_id:
+                    type: integer
+                    example: 1
+                  show_id:
+                    type: integer
+                    example: 1
+                  show_name:
+                    type: string
+                    example: Show A
+                  rating:
+                    type: number
+                    example: 4.5
+                  tags:
+                    type: string
+                    example: Music
+                  date:
+                    type: string
+                    example: 2023-05-15
+                  time:
+                    type: string
+                    example: 15:30:00
+                  ticket_price:
+                    type: number
+                    example: 250.0
+
+    patch:
+      tags:
+        - Links
+      summary: Update link details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 1
+                show_id:
+                  type: integer
+                  example: 1
+                venue_id:
+                  type: integer
+                  example: 1
+                date:
+                  type: string
+                  format: date
+                  example: '2023-05-20'
+                time:
+                  type: string
+                  format: time
+                  example: '16:45:00'
+                price:
+                  type: number
+                  example: 300.0
+      responses:
+        '200':
+          description: Updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Updated successfully
+  /api/admin/venuelink/delink/{id}:
+    delete:
+      tags:
+        - Links
+      summary: Remove a link between a show and a venue
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID of the link to remove
+      responses:
+        '200':
+          description: Show delinked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Show delinked successfully
+        '404':
+          description: Link is missing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Link is missing
+                  
+  /api/search:
+   get:
+    tags:
+        - Search
+    summary: Search for venues and shows
+    parameters:
+      - in: query
+        name: query
+        required: true
+        schema:
+          type: string
+        description: Search query
+    responses:
+      '200':
+        description: Search results
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: Venue A
+                  place:
+                    type: string
+                    example: Place A
+                  location:
+                    type: string
+                    example: Location A
+                  capacity:
+                    type: integer
+                    example: 1000
+                  type:
+                    type: string
+                    example: Venue name
+                  result:
+                    type: string
+                    example: Venue A Place A, Location A
+                  venue_id:
+                    type: integer
+                    example: 1
+                  link:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        link_id:
+                          type: integer
+                          example: 1
+                        show_id:
+                          type: integer
+                          example: 1
+                        date:
+                          type: string
+                          example: 2023-05-15
+                        time:
+                          type: string
+                          example: 15:30:00
+                        ticket_price:
+                          type: number
+                          example: 250.0
+                        tickets_left:
+                          type: integer
+                          example: 50
+                        show_name:
+                          type: string
+                          example: Show A
+                        rating:
+                          type: number
+                          example: 4.5
+                        tags:
+                          type: string
+                          example: Music
+                        venue_name:
+                          type: string
+                          example: Venue A
+                        place:
+                          type: string
+                          example: Place A
+                        location:
+                          type: string
+                          example: Location A
+                          
+  /api/book:
+    get:
+      tags:
+        - Book Tickets
+      summary: Get booking details
+      description: Get details about available bookings and specific booking details by ID
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    show_name:
+                      type: string
+                      example: Show A
+                    venue_name:
+                      type: string
+                      example: Venue A
+                    place:
+                      type: string
+                      example: Place A
+                    location:
+                      type: string
+                      example: Location A
+                    ticket_price:
+                      type: integer
+                      example: 250
+                    date:
+                      type: string
+                      example: 2023-05-15
+                    time:
+                      type: string
+                      example: 15:30:00
+                    tickets_left:
+                      type: integer
+                      example: 50
+                    wallet:
+                      type: number
+                      example: 500.0
+                    price:
+                      type: number
+                      example: 250.0
+    post:
+      tags:
+        - Book Tickets
+      summary: Book tickets
+      description: Book tickets for a specific show
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 1
+                checked:
+                  type: boolean
+                  example: true
+                wallet:
+                  type: number
+                  example: 500.0
+                no_of_seats_requested:
+                  type: integer
+                  example: 2
+                ticket_price:
+                  type: number
+                  example: 250.0
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Tickets booked successfully. A confirmation email will be sent shortly.
+                    
+  /api/venue/export:
+    post:
+      tags:
+        - Export Venue
+      summary: Export venue details
+      description: Export venue details to a CSV file and send it to the user via email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: user123
+                venue_id:
+                  type: integer
+                  example: 1
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: You will receive an email in your registered email shortly
+                    
+  /api/profile:
+    get:
+      tags:
+        - Profile
+      summary: Get user profile information
+      description: Get user profile information by providing the username as a query parameter
+      parameters:
+        - in: query
+          name: username
+          schema:
+            type: string
+          required: true
+          description: Username of the user whose profile information is requested
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  first_name:
+                    type: string
+                    example: John
+                  last_name:
+                    type: string
+                    example: Doe
+                  email:
+                    type: string
+                    example: john@example.com
+                  id:
+                    type: integer
+                    example: 1
+                  admin:
+                    type: boolean
+                    example: false
+                  pdf_report:
+                    type: boolean
+                    example: true
+
+    patch:
+      tags:
+        - Profile
+      summary: Update user profile
+      description: Update user profile information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: user123
+                first_name:
+                  type: string
+                  example: John
+                last_name:
+                  type: string
+                  example: Doe
+                password:
+                  type: string
+                  example: newpassword
+                pdf_report:
+                  type: boolean
+                  example: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Profile updated successfully
+                    
+  /api/stats:
+    get:
+      tags:
+        - Statistics
+      summary: Get statistics
+      description: Get statistics about venues or shows. Provide the 'name' query parameter with 'venue' or 'show' or 'popular' to choose the statistics.
+      parameters:
+        - in: query
+          name: name
+          schema:
+            type: string
+            enum: [venue, show, popular]
+          required: true
+          description: Choose the type of statistics to retrieve (venue or show or popular)
+      responses:
+        '200':
+          description: Successful response with image
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+                description: Image containing the plotted statistics
+
+  /api/wallet:
+    get:
+      tags:
+        - Wallet
+      summary: Get user's wallet balance
+      description: Get the wallet balance of a user.
+      parameters:
+        - in: query
+          name: username
+          schema:
+            type: string
+          required: true
+          description: Username of the user whose wallet balance is being queried
+      responses:
+        '200':
+          description: Successful response with user's wallet balance
+          content:
+            application/json:
+              schema:
+                type: number
+                description: User's wallet balance
+
+    patch:
+      tags:
+        - Wallet
+      summary: Update user's wallet balance
+      description: Update the wallet balance of a user by adding funds.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Username of the user whose wallet is being updated
+                add_money:
+                  type: number
+                  description: Amount to add to the user's wallet balance (0 to activate the wallet)
+                  minimum: 0
+                  maximum: 10000
+      responses:
+        '200':
+          description: Successful response with message
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message indicating wallet update status
+
+  /api/reset/password:
+    post:
+      tags:
+        - Reset Password
+      summary: Reset user password
+      description: Reset the password for a user using a password reset token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Username of the user whose password is being reset
+                password:
+                  type: string
+                  description: New password to set for the user
+                token:
+                  type: string
+                  description: Password reset token received by the user
+      responses:
+        '200':
+          description: Successful response with message
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message indicating password reset status
+                    
+  /api/forgot/password:
+    post:
+      tags:
+        - Forgot Password
+      summary: Request password reset link
+      description: Request a password reset link to be sent to the user's email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Email address of the user
+      responses:
+        '200':
+          description: Successful response indicating password reset link has been sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Message indicating that the password reset link has been sent
+        '400':
+          description: Bad request due to missing or invalid email
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message indicating missing or invalid email
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message indicating that the user was not found
+
+
+  /api/reset/password/{token}:
+    get:
+      tags:
+        - Reset Password
+      summary: Verify password reset token
+      description: Verify the validity of a password reset token.
+      parameters:
+        - in: path
+          name: token
+          schema:
+            type: string
+          required: true
+          description: Password reset token to be verified
+      responses:
+        '200':
+          description: Successful response with message
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message indicating token validity
+                    
+  /api/token/verifier:
+    get:
+      tags:
+        - Availability check
+      summary: Verify user role using JWT token
+      description: Verify the role of a user using their JWT token.
+      responses:
+        '200':
+          description: Successful response with user role
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  role:
+                    type: string
+                    description: Role of the user (either "user" or "admin")
+                    
+  
+
+
+
+
+
+
+
+
+
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      
+      
+      
+      

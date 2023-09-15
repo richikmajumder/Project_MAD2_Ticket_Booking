@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Ticket Booking Confirmation</title>
+  <meta charset="UTF-8"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-image: url('https://thumbs.dreamstime.com/b/film-reel-movie-cinema-vector-film-reel-movie-107164547.jpg'); /* Replace with your background image URL */
+      background-size: cover;
+      background-position: center;
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
+      border-radius: 10px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .header img {
+      max-width: 200px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 30px;
+      margin-bottom: 20px;
+      color: #007bff;
+    }
+
+    p {
+      margin-bottom: 10px;
+    }
+
+    .details {
+      border: 2px solid #007bff;
+      padding: 10px;
+      border-radius: 5px;
+    }
+
+    .show-info {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .show-name {
+      font-size: 24px;
+      font-weight: bold;
+      color: #007bff;
+    }
+
+    .show-date-time {
+      font-size: 18px;
+      color: #555;
+    }
+
+    .ticket-info {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .ticket-count {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .ticket-price {
+      font-size: 18px;
+      color: #555;
+    }
+
+    .note {
+      text-align: center;
+      font-style: italic;
+      margin-top: 20px;
+      color: #888;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 14px;
+      color: #888;
+    }
+
+    .footer img {
+      max-width: 100px;
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="file:////Users/richik/Desktop/MAD2_Project/ticketing_app/files/qrcode.png" alt="Ticket QR"> <!-- Replace with your logo URL -->
+    </div>
+    <h1>Ticket Booking Confirmation for {{venue}}</h1>
+    <div class="details">
+      <div class="show-info">
+        <div class="show-name">{{show_name}}</div>
+        <div class="show-date-time">{{date}}   {{time[0:-3]}}</div>
+      </div>
+      <div class="ticket-info">
+        <div class="ticket-count">Number of Tickets Booked: {{tickets_booked}}</div>
+        <div class="ticket-price">Price Paid: ₹{{price_paid}}</div>
+      </div>
+    </div>
+    <div class="note">
+      <p>Thank you for booking tickets. Your booking is confirmed.</p>
+      <p>Bring this confirmation email with you to the venue.</p>
+    </div>
+    <div class="footer">
+      <p>Contact us: 21f1000460@ds.study.iitm.ac.in</p>
+      
+    </div>
+  </div>
+</body>
+</html>
