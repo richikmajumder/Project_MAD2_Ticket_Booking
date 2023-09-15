@@ -1,6 +1,6 @@
 node_modules/
 __pycache__/
 environment/
-.*.DS_Store
+*.DS_Store
 email.txt
 password.txt
