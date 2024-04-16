@@ -49,10 +49,10 @@ export default{
             console.log(url)
             this.$emit('close');
         },
-        rate(url,payload){
+        async rate(url,payload){
             //console.log(url)
             //console.log(payload)
-            update(url,payload,this.$router)
+            await update(url,payload,this.$router)
             this.$emit('close');
         }
     }
